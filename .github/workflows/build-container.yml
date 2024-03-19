@@ -15,18 +15,9 @@ env:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        include:
-          - os: "ubuntu-latest"
-            platform: "linux/amd64"
-          - os: "ARM64"
-            platform: "linux/arm64"
-    runs-on: "${{ matrix.os }}"
+    runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: "main"
       - name: Build and push containers
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -35,63 +26,5 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
         run: |
-          runcmd=/bin/bash
-          if [[ $PLATFORM == 'linux/amd64' ]]; then
-            mkdir -p ../images
-            runcmd="podman run -e=REGISTRY_REPO -e=TAG -e=PLATFORM -e=ARCH -e=username -e=password -e=registry -i \
-                          -u 0  --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
-                          --net=host --privileged --device /dev/fuse:rw \
-                          -v ../images:/var/lib/containers:Z \
-                          -v $PWD:/root:ro \
-                          ghcr.io/smerschjohann/containers/fedbox:latest /bin/bash"
-          fi
-
-          $runcmd << 'EOF'
-            cd /root
-            image_name="$REGISTRY_REPO/ympd"
-            dir='.'
-            echo -n $password | buildah login -u $username --password-stdin $registry 
-            buildah bud \
-              --build-arg TAGORDIGEST="@$digest" \
-              --platform $PLATFORM \
-              -f $dir/Dockerfile \
-              --format docker \
-              --tls-verify=true \
-              -t $image_name:$ARCH-$TAG
-              $dir
-            
-            buildah push $image_name:$ARCH-$TAG docker://$image_name:$ARCH-$TAG
-          EOF
-
-  merge:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: "main"
-      - name: Log in to ghcr.io
-        env:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: ghcr.io
-        run: |
-          echo -n $password | buildah login -u $username --password-stdin $registry 
-
-      - name: Merge & push manifests
-        env:
-          TASKS: ${{ github.event_name == 'push' && env.DEFAULT_TASKS || github.event.inputs.tasks }}
-        run: |
-          name=ympd
-          image_name="$REGISTRY_REPO/$name"
-          final_manifest="$image_name:$TAG"
-          
-          buildah manifest rm $final_manifest > /dev/null 2> /dev/null || true
-          buildah manifest create $final_manifest
-          
-          for arch in "amd64" "arm64"; do
-            buildah pull --arch $arch $image_name:$arch-$TAG
-            buildah manifest add $final_manifest docker://$image_name:$arch-$TAG
-          done
-          
-          buildah manifest push --rm --all $final_manifest docker://$final_manifest
+          echo -n $password | docker login -u $username --password-stdin $registry $REGISTRY_REPO/ympd:latest
+          docker push $REGISTRY_REPO/ympd:latest
