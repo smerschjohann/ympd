@@ -24,8 +24,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64
+        #with:
+        #  platforms: linux/amd64,linux/arm64
 
       - name: Build and push containers
         env:
@@ -34,4 +34,4 @@ jobs:
           registry: ghcr.io
         run: |
           echo -n $password | docker login -u $username --password-stdin $registry
-          docker buildx build --push --platform=linux/arm64,linux/amd64 -t $REGISTRY_REPO/ympd:latest .
+          docker buildx build --push --platform=linux/amd64 -t $REGISTRY_REPO/ympd:latest .
