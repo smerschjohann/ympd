@@ -57,8 +57,7 @@ jobs:
               -f $dir/Dockerfile \
               --format docker \
               --tls-verify=true \
-              -t $image_name:$ARCH-$TAG \
-              --target $target
+              -t $image_name:$ARCH-$TAG
               $dir
             
             buildah push $image_name:$ARCH-$TAG docker://$image_name:$ARCH-$TAG
