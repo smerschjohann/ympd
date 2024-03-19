@@ -42,7 +42,7 @@ jobs:
                           -u 0  --security-opt seccomp=unconfined --security-opt apparmor=unconfined \
                           --net=host --privileged --device /dev/fuse:rw \
                           -v ../images:/var/lib/containers:Z \
-                          -v $PWD/images:/root/images:ro \
+                          -v $PWD:/root:ro \
                           ghcr.io/smerschjohann/containers/fedbox:latest /bin/bash"
           fi
 
