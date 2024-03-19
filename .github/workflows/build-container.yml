@@ -26,5 +26,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
         run: |
-          echo -n $password | docker login -u $username --password-stdin $registry $REGISTRY_REPO/ympd:latest
+          echo -n $password | docker login -u $username --password-stdin $registry
+          docker buildx build --platform=linux/arm64,linux/amd64 . -t $REGISTRY_REPO/ympd:latest
           docker push $REGISTRY_REPO/ympd:latest
